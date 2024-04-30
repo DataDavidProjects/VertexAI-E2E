@@ -1,0 +1,5 @@
+site_name: Vertex AI E2E Pipeline
+site_dir: docs/site
+nav:
+  - Home: index.md
+  - Sections: docs/pipeline/index.md
