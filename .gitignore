@@ -172,3 +172,5 @@ env.sh
 
 # Compiled pipelines
 **/*pipeline.json
+
+**/site/** 

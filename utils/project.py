@@ -1,0 +1,140 @@
+import os
+from dataclasses import dataclass
+
+from google.cloud import artifactregistry, storage
+
+
+@dataclass
+class CloudStorageConfig:
+    client: storage.Client
+    config: dict
+    bucket: storage.Bucket = None
+
+    def create_bucket(self) -> storage.Bucket:
+        """Create a Cloud Storage bucket.
+
+        Args:
+            bucket_name (str): name of the bucket to create
+
+        Returns:
+            storage.Bucket: created bucket
+        """
+        # Create a new bucket
+        bucket = self.client.create_bucket(
+            bucket_or_name=self.config["bucket_name"], location=self.config["region"]
+        )
+
+        # Add the service account as an object admin if provided
+        if self.config["service_account"]:
+            policy = bucket.get_iam_policy(requested_policy_version=3)
+            policy.bindings.append(
+                {
+                    "role": "roles/storage.objectAdmin",
+                    "members": [f'serviceAccount:{self.config["service_account"]}'],
+                }
+            )
+            bucket.set_iam_policy(policy)
+
+        # Set the bucket property
+        self.bucket = bucket
+
+        return self
+
+    def template_directories(self) -> None:
+        """Create multiple directories in the bucket.
+
+        Args:
+            bucket (storage.Bucket): bucket to create directories in
+        """
+        for root in self.config["directories"]:
+            subdirectories = [
+                "run",
+                "data/01_raw",
+                "data/02_elaboration",
+                "data/03_primary",
+                "data/04_processing",
+                "data/05_features",
+                "data/06_scoring",
+                "data/07_output",
+                "data/08_reporting",
+                "artifacts/model",
+                "artifacts/transformer",
+            ]
+            for subdirectory in subdirectories:
+                blob = self.bucket.blob(f"{root}/{subdirectory}/")
+                blob.upload_from_string("")
+
+
+@dataclass
+class ArtifactRegistryConfig:
+    client: artifactregistry.ArtifactRegistryClient
+    config: dict
+
+    def authenticate(self):
+        os.system(f"gcloud auth application-default login")
+
+    def create_repository(self) -> str:
+        """Creates a new repository in the GCP Artifact Registry based on docker image.
+
+        Args:
+            project_id (str): project ID or project number of the Cloud project.
+            location (str): location you want to use. For a list of locations.
+            repository_id (str): the name of the repository.
+
+        Returns:
+            The name of the created repository.
+        """
+        # os.system(f"gcloud auth configure-docker {self.config.get('region')}-docker.pkg.dev")
+        # REQ: gcloud auth configure-docker europe-west6-docker.pkg.dev
+
+        parent = f"projects/{self.config.get('project_id')}/locations/{self.config.get('region')}"
+        repository = artifactregistry.Repository()
+        repository.format = artifactregistry.Repository.Format.DOCKER
+        response = self.client.create_repository(
+            request={
+                "parent": parent,
+                # Repository_id match the bucket name for consistency
+                "repository_id": self.config.get("bucket_name"),
+                "repository": repository,
+            }
+        )
+        print("Created Repository in Artifact Registry")
+
+        return response
+
+
+@dataclass
+class DockerConfig:
+    config: dict
+
+    def build_image(self):
+        """Builds a docker image based on the provided configuration."""
+        # Build the docker image
+        cmd = f"docker build -t {self.config.get('image_name')} -f {self.config.get('dockerfile_path')} ."
+        print(f"\nRunning Command:\n{cmd}\n")
+        os.system(cmd)
+        return self
+
+    def tag_image(self):
+        """Tags a Docker image based on the provided configuration."""
+        # Tag the Docker image
+        cmd = f"docker tag {self.config.get('image_name')} {self.config.get('region')}-docker.pkg.dev/{self.config.get('project_id')}/{self.config.get('repository_id')}/{self.config.get('image_name')}:{self.config.get('image_tag')}"
+        print(f"\nRunning Command:\n{cmd}\n")
+        os.system(cmd)
+        return self
+
+    def push_image(self):
+        """Push a docker image based on the provided configuration on GCP."""
+        os.system(
+            f"gcloud auth configure-docker {self.config.get('region')}-docker.pkg.dev"
+        )
+        # Push the docker image
+        base_image = f"{self.config.get('region')}-docker.pkg.dev/{self.config.get('project_id')}/{self.config.get('repository_id')}/{self.config.get('image_name')}:{self.config.get('image_tag')}"
+        cmd = f"docker push {base_image}"
+        print(f"\nRunning Command:\n{cmd}\n")
+        os.system(cmd)
+        return self
+
+    def create_container(self):
+        """Creates and Push container based on the provided configuration."""
+        self.build_image().tag_image().push_image()
