@@ -35,4 +35,4 @@ docker_config_training = DockerConfig(config=container_args["training"])
 
 # Create the Docker container process
 docker_config_deployment.create_container()
-docker_config_training.create_container()
+# docker_config_training.create_container()

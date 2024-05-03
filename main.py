@@ -3,7 +3,7 @@ import os
 from dotenv import find_dotenv, load_dotenv
 from google.cloud import artifactregistry, storage
 
-from utils.project import ArtifactRegistryConfig, CloudStorageConfig
+from utils.project import ArtifactRegistryConfig, CloudStorageConfig, ProjectConfig
 
 # Set up Project
 load_dotenv(find_dotenv())
@@ -17,6 +17,13 @@ project_config = {
     # Note: match directory names with pipeline names in pipelines directory
     "directories": ["training", "deployment"],
 }
+
+# Initialize Project Config
+project_config = ProjectConfig(config=project_config)
+
+# Enable APIs
+project_config.enable_apis()
+
 
 # Initialzie Cloud Storage Client
 storage_client = storage.Client()

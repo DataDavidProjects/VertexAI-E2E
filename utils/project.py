@@ -138,3 +138,22 @@ class DockerConfig:
     def create_container(self):
         """Creates and Push container based on the provided configuration."""
         self.build_image().tag_image().push_image()
+
+
+@dataclass
+class ProjectConfig:
+    config: dict
+
+    def enable_apis(self):
+        """Activates the specified Google Cloud APIs."""
+        cmd = """
+        gcloud services enable compute.googleapis.com \
+                           containerregistry.googleapis.com  \
+                           aiplatform.googleapis.com  \
+                           cloudbuild.googleapis.com \
+                           cloudfunctions.googleapis.com
+        """
+        print(f"\nRunning Command:\n{cmd}\n")
+        exit_code = os.system(cmd)
+        if exit_code != 0:
+            raise Exception("Failed to run command. Is 'gcloud' installed?")
