@@ -19,7 +19,7 @@ TIMESTAMP = datetime.now().strftime("%Y%m%d%H%M%S")
 PIPELINE_NAME = Path(__file__).resolve().parents[0].name
 
 start_pipeline = pipeline_jobs.PipelineJob(
-    display_name="custom-pipeline",
+    display_name=PIPELINE_NAME,
     template_path=f"pipelines/{PIPELINE_NAME}/{PIPELINE_NAME}_pipeline.json",
     enable_caching=False,
     location=REGION,
@@ -28,4 +28,6 @@ start_pipeline = pipeline_jobs.PipelineJob(
 )
 
 
+# Run the pipeline
+# Note : Update Containter if new changes are made in src
 start_pipeline.run()

@@ -31,8 +31,25 @@ deploymentSpec:
 
           '
         - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
-          \ *\n\ndef hyperparameter_tuning_component():\n\n    from src.features.hyperparameter\
-          \ import Hyperparameter\n\n    hp_tuning = Hyperparameter()\n\n"
+          \ *\n\ndef hyperparameter_tuning_component():\n\n    from src.features.selection\
+          \ import FeatureEliminationShap\n    from sklearn.model_selection import\
+          \ RandomizedSearchCV\n    from sklearn.ensemble import RandomForestClassifier\n\
+          \    from sklearn.datasets import make_classification\n\n    # Create a\
+          \ classification problem\n    X, y = make_classification(\n        n_samples=1000,\
+          \ n_features=20, n_informative=5, n_redundant=15, random_state=1\n    )\n\
+          \n    # Define the parameter grid for the random search\n    param_grid\
+          \ = {\n        \"n_estimators\": [50, 100, 200],\n        \"max_depth\"\
+          : [10, 20, 30],\n        \"min_samples_split\": [2, 5, 10],\n    }\n\n \
+          \   # Initialize the base model\n    base_model = RandomForestClassifier()\n\
+          \n    # Initialize the random search model\n    model = RandomizedSearchCV(\n\
+          \        estimator=base_model,\n        param_distributions=param_grid,\n\
+          \    )\n\n    # Initialize the feature elimination object\n    fe = FeatureEliminationShap(\n\
+          \        model=model,\n        step=0.2,\n        cv=5,\n        scoring=\"\
+          roc_auc\",\n        standard_error_threshold=0.5,\n        return_type=\"\
+          feature_names\",\n        num_features=\"best_coherent\",\n    )\n\n   \
+          \ import time\n\n    time_start = time.time()\n\n    # Run the feature elimination\
+          \ process\n    reduced_features = fe.run(X, y)\n\n    print(reduced_features)\n\
+          \n    print(f\"Time taken: {time.time() - time_start} seconds\")\n\n"
         image: europe-west6-docker.pkg.dev/opencreator-1699308232742/gcp-end-to-end-ml/deployment:latest
 pipelineInfo:
   name: hyperparameter-tuning-component

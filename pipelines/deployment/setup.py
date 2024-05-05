@@ -18,6 +18,7 @@ setup(
         "pyyaml==6.0.1",
         "python-dotenv==1.0.1",
         "pyarrow==16.0.0",
+        "probatus==3.1.0",
         "jinja2==3.1.3",
         "mkdocs==1.6.0",
         "black==24.4.2",

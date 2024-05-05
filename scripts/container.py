@@ -1,7 +1,7 @@
 import os
 
 from dotenv import find_dotenv, load_dotenv
-from project import DockerConfig
+from utils.project import DockerConfig
 
 # Load environment variables from .env file
 load_dotenv(find_dotenv())
@@ -31,7 +31,7 @@ container_args = {
 
 # Create a DockerConfig instance
 docker_config_deployment = DockerConfig(config=container_args["deployment"])
-docker_config_training = DockerConfig(config=container_args["training"])
+
 
 # Create the Docker container process
 docker_config_deployment.create_container()

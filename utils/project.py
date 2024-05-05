@@ -6,6 +6,14 @@ from google.cloud import artifactregistry, storage
 
 @dataclass
 class CloudStorageConfig:
+    """Cloud Storage configuration.
+
+    Attributes:
+        client (storage.Client): Google Cloud Storage client.
+        config (dict): Configuration dictionary.
+        bucket (storage.Bucket): Google Cloud Storage bucket.
+    """
+
     client: storage.Client
     config: dict
     bucket: storage.Bucket = None
@@ -67,6 +75,13 @@ class CloudStorageConfig:
 
 @dataclass
 class ArtifactRegistryConfig:
+    """Artifact Registry configuration.
+
+    Attributes:
+        client (artifactregistry.ArtifactRegistryClient): Google Cloud Artifact Registry client.
+        config (dict): Configuration dictionary.
+    """
+
     client: artifactregistry.ArtifactRegistryClient
     config: dict
 
@@ -105,6 +120,12 @@ class ArtifactRegistryConfig:
 
 @dataclass
 class DockerConfig:
+    """Docker configuration.
+
+    Attributes:
+        config (dict): Configuration dictionary.
+    """
+
     config: dict
 
     def build_image(self):
@@ -142,6 +163,11 @@ class DockerConfig:
 
 @dataclass
 class ProjectConfig:
+    """Project configuration.
+    Attributes:
+        config (dict): Configuration dictionary.
+    """
+
     config: dict
 
     def enable_apis(self):
@@ -151,7 +177,8 @@ class ProjectConfig:
                            containerregistry.googleapis.com  \
                            aiplatform.googleapis.com  \
                            cloudbuild.googleapis.com \
-                           cloudfunctions.googleapis.com
+                           cloudfunctions.googleapis.com \
+                           bigquery.googleapis.com
         """
         print(f"\nRunning Command:\n{cmd}\n")
         exit_code = os.system(cmd)

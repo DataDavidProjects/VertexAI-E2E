@@ -26,9 +26,53 @@ BASE_IMAGE = f"{REGION}-docker.pkg.dev/{PROJECT_ID}/{REPOSITORY}/{PIPELINE_NAME}
 )
 def hyperparameter_tuning_component():
 
-    from src.features.hyperparameter import Hyperparameter
+    from src.features.selection import FeatureEliminationShap
+    from sklearn.model_selection import RandomizedSearchCV
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.datasets import make_classification
 
-    hp_tuning = Hyperparameter()
+    # Create a classification problem
+    X, y = make_classification(
+        n_samples=1000, n_features=20, n_informative=5, n_redundant=15, random_state=1
+    )
+
+    # Define the parameter grid for the random search
+    param_grid = {
+        "n_estimators": [50, 100, 200],
+        "max_depth": [10, 20, 30],
+        "min_samples_split": [2, 5, 10],
+    }
+
+    # Initialize the base model
+    base_model = RandomForestClassifier()
+
+    # Initialize the random search model
+    model = RandomizedSearchCV(
+        estimator=base_model,
+        param_distributions=param_grid,
+    )
+
+    # Initialize the feature elimination object
+    fe = FeatureEliminationShap(
+        model=model,
+        step=0.2,
+        cv=5,
+        scoring="roc_auc",
+        standard_error_threshold=0.5,
+        return_type="feature_names",
+        num_features="best_coherent",
+    )
+
+    import time
+
+    time_start = time.time()
+
+    # Run the feature elimination process
+    reduced_features = fe.run(X, y)
+
+    print(reduced_features)
+
+    print(f"Time taken: {time.time() - time_start} seconds")
 
 
 # Compile the component
