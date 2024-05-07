@@ -1,5 +1,5 @@
-site_name: Vertex AI E2E Pipeline
+site_name: Vertex AI E2E Pipelines
 
 nav:
   - Home: index.md
-  - Sections: pipeline/index.md
+  - Pipeline: pipeline/index.md
