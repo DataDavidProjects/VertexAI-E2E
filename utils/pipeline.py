@@ -3,10 +3,14 @@ from dataclasses import dataclass
 from dotenv import find_dotenv, load_dotenv
 from google.cloud import artifactregistry, storage
 
-from utils.project import ArtifactRegistryConfig, CloudStorageConfig, ProjectConfig
 
 # specify utils in import for import in main.py
-from utils.project import DockerConfig
+from utils.project import (
+    ArtifactRegistryConfig,
+    CloudStorageConfig,
+    ProjectConfig,
+    DockerConfig,
+)
 
 
 # Load environment variables from .env file
@@ -72,7 +76,7 @@ class LazyPipe:
         # Initialize Artifact Registry Client
         self.artifactregistry_client = artifactregistry.ArtifactRegistryClient()
         # Initialize Project Config
-        self.project_config = ProjectConfig(config=self.project_config)
+        self._project_config = ProjectConfig(config=self.project_config)
         # Initialize Artifact Registry Config
         self.artifactregistry_config = ArtifactRegistryConfig(
             client=self.artifactregistry_client, config=self.project_config
@@ -92,7 +96,7 @@ class LazyPipe:
         """
 
         # Enable APIs
-        self.project_config.enable_apis()
+        self._project_config.enable_apis()
 
     def set_up_storage(self):
         """
@@ -110,6 +114,7 @@ class LazyPipe:
         """
         Create the Docker container.
         """
+        print(f"Creating container with args: {self.container_args[self.pipe]}")
         docker_config = DockerConfig(config=self.container_args[self.pipe])
         docker_config.create_container()
 
@@ -125,7 +130,7 @@ class LazyPipe:
         """
         os.system(f"python pipelines/{self.pipe}/run.py")
 
-    def magic(self, setup: bool = False):
+    def magic(self, setup: bool = True):
         """
         End-to-end pipeline creation and execution process.
         Args:

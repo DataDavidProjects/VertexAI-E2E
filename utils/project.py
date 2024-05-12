@@ -77,9 +77,14 @@ class CloudStorageConfig:
             "artifacts/transformer",
         ]
         for subdirectory in subdirectories:
-            print(f"Creating subdirectory: {root}/{subdirectory}")
             blob = self.bucket.blob(f"{root}/{subdirectory}/")
-            blob.upload_from_string("")
+            if not blob.exists():
+                print(f"Creating subdirectory: {root}/{subdirectory}")
+                blob.upload_from_string("")
+            else:
+                print(
+                    f"Subdirectory {root}/{subdirectory} already exists. Skipping creation."
+                )
 
 
 @dataclass
@@ -144,7 +149,7 @@ class DockerConfig:
     def build_image(self):
         """Builds a docker image based on the provided configuration."""
         # Build the docker image
-        cmd = f"docker build -t {self.config.get('image_name')} -f {self.config.get('dockerfile_path')} ."
+        cmd = f"docker build --build-arg PIPELINE_NAME={self.config.get('image_name')} -t {self.config.get('image_name')} -f {self.config.get('dockerfile_path')} ."
         print(f"\nRunning Command:\n{cmd}\n")
         os.system(cmd)
         return self

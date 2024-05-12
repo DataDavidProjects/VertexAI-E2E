@@ -50,7 +50,7 @@ deploymentSpec:
           \ import time\n\n    time_start = time.time()\n\n    # Run the feature elimination\
           \ process\n    reduced_features = fe.run(X, y)\n\n    print(reduced_features)\n\
           \n    print(f\"Time taken: {time.time() - time_start} seconds\")\n\n"
-        image: europe-west6-docker.pkg.dev/opencreator-1699308232742/gcp-end-to-end-ml/deployment:latest
+        image: europe-west6-docker.pkg.dev/opencreator-1699308232742/berkabank/production:latest
 pipelineInfo:
   name: hyperparameter-tuning-component
 root:
