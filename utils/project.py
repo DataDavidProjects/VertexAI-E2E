@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from google.api_core.exceptions import AlreadyExists, Conflict
 
 from google.cloud import artifactregistry, storage
 
@@ -27,24 +28,29 @@ class CloudStorageConfig:
         Returns:
             storage.Bucket: created bucket
         """
-        # Create a new bucket
-        bucket = self.client.create_bucket(
-            bucket_or_name=self.config["bucket_name"], location=self.config["region"]
-        )
-
-        # Add the service account as an object admin if provided
-        if self.config["service_account"]:
-            policy = bucket.get_iam_policy(requested_policy_version=3)
-            policy.bindings.append(
-                {
-                    "role": "roles/storage.objectAdmin",
-                    "members": [f'serviceAccount:{self.config["service_account"]}'],
-                }
+        try:
+            # Create a new bucket
+            bucket = self.client.create_bucket(
+                bucket_or_name=self.config["bucket_name"],
+                location=self.config["region"],
             )
-            bucket.set_iam_policy(policy)
 
-        # Set the bucket property
-        self.bucket = bucket
+            # Add the service account as an object admin if provided
+            if self.config["service_account"]:
+                policy = bucket.get_iam_policy(requested_policy_version=3)
+                policy.bindings.append(
+                    {
+                        "role": "roles/storage.objectAdmin",
+                        "members": [f'serviceAccount:{self.config["service_account"]}'],
+                    }
+                )
+                bucket.set_iam_policy(policy)
+            # Set the bucket property
+            self.bucket = bucket
+
+        except Conflict:
+            print("The bucket already exists. Skipping creation...")
+            self.bucket = self.client.get_bucket(self.config["bucket_name"])
 
         return self
 
@@ -54,23 +60,26 @@ class CloudStorageConfig:
         Args:
             bucket (storage.Bucket): bucket to create directories in
         """
-        for root in self.config["directories"]:
-            subdirectories = [
-                "run",
-                "data/01_raw",
-                "data/02_elaboration",
-                "data/03_primary",
-                "data/04_processing",
-                "data/05_features",
-                "data/06_scoring",
-                "data/07_output",
-                "data/08_reporting",
-                "artifacts/model",
-                "artifacts/transformer",
-            ]
-            for subdirectory in subdirectories:
-                blob = self.bucket.blob(f"{root}/{subdirectory}/")
-                blob.upload_from_string("")
+        print(f"Creating directories in bucket: {self.config['directories']}")
+        root = self.config["directories"]
+        print(f"Creating directory: {root}")
+        subdirectories = [
+            "run",
+            "data/01_raw",
+            "data/02_elaboration",
+            "data/03_primary",
+            "data/04_processing",
+            "data/05_features",
+            "data/06_scoring",
+            "data/07_output",
+            "data/08_reporting",
+            "artifacts/model",
+            "artifacts/transformer",
+        ]
+        for subdirectory in subdirectories:
+            print(f"Creating subdirectory: {root}/{subdirectory}")
+            blob = self.bucket.blob(f"{root}/{subdirectory}/")
+            blob.upload_from_string("")
 
 
 @dataclass
@@ -101,21 +110,25 @@ class ArtifactRegistryConfig:
         """
         # os.system(f"gcloud auth configure-docker {self.config.get('region')}-docker.pkg.dev")
         # REQ: gcloud auth configure-docker europe-west6-docker.pkg.dev
+        try:
+            parent = f"projects/{self.config.get('project_id')}/locations/{self.config.get('region')}"
+            repository = artifactregistry.Repository()
+            repository.format = artifactregistry.Repository.Format.DOCKER
+            response = self.client.create_repository(
+                request={
+                    "parent": parent,
+                    # Repository_id match the bucket name for consistency
+                    "repository_id": self.config.get("bucket_name"),
+                    "repository": repository,
+                }
+            )
+            print("Created Repository in Artifact Registry")
 
-        parent = f"projects/{self.config.get('project_id')}/locations/{self.config.get('region')}"
-        repository = artifactregistry.Repository()
-        repository.format = artifactregistry.Repository.Format.DOCKER
-        response = self.client.create_repository(
-            request={
-                "parent": parent,
-                # Repository_id match the bucket name for consistency
-                "repository_id": self.config.get("bucket_name"),
-                "repository": repository,
-            }
-        )
-        print("Created Repository in Artifact Registry")
+            return response
 
-        return response
+        except AlreadyExists:
+            print("The repository already exists. Skipping creation...")
+            return None
 
 
 @dataclass
