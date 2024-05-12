@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import random
 from kfp import compiler, dsl
 
 from utils.vertexai import vertex_authenticate
@@ -19,6 +20,7 @@ PIPELINE_NAME = Path(__file__).resolve().parents[0].name
 pipeline_args = {
     # Component Configs
     "hyperparameter_tuning_component": {
+        # Component Args to unpack in the component parameters
         "component_args": {
             "project_id": os.environ.get("PROJECT_ID"),
             "region": os.environ.get("REGION"),
@@ -35,9 +37,8 @@ pipeline_args = {
     description=f"Pipeline on Vertex AI for {PIPELINE_NAME}",
 )
 def pipeline():
-    # Define pipeline steps using components
+
     hyperparameter_tuning_component()
-    pass
 
 
 # Compile the pipeline

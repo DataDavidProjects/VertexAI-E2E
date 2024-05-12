@@ -11,16 +11,18 @@ A LazyPipeline is a pipeline that follows specific conventions and allows users 
 In order to eliminate the majority of the boilerplate work, some naming convention are introduced.
 Inside each folder type:
 
-1. Pipeline
-2. Components
+1.  Pipeline
+    There following files are mandatory:
 
-There following files are mandatory:
+    1. `definition.py`
+    2. `Dockerfile`
+    3. `run.py`
+    4. `setup.py`
+    5. `src`
 
-1. `definition.py`
-2. `Dockerfile`
-3. `run.py`
-4. `setup.py`
-5. `src`
+2.  Components
+    There following files are mandatory:
+    1. `definition.py`
 
 ## Pipelines
 

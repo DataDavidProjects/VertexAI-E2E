@@ -33,6 +33,7 @@ def predict():
     """
 
     predictor = ModelPipeline()
+
     features_names = predictor.model.feature_names_in_.tolist()
     instances = request.get_json()["instances"]
     data = pd.DataFrame(instances)[features_names]
